@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/caidan1"
+        android:title="caidan1"
+        android:icon="@mipmap/ic_launcher"
+        app:showAsAction="always"/>
+    <item android:id="@+id/caidan2"
+        android:title="caidan2"
+        android:icon="@mipmap/ic_launcher"/>
+    <item android:id="@+id/caidan3"
+        android:title="caidan3"
+        android:icon="@mipmap/ic_launcher"/>
+</menu>
