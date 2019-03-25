@@ -9,6 +9,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -33,6 +34,10 @@ public class MainActivity extends AppCompatActivity {
 
         tabLayout = findViewById(R.id.tablayout);
         tabLayout.setupWithViewPager(viewPager);
+
+//        Log.i(MyLog.TAG, "onCreate: "+Util.getRefreshTime(1));
+//        Log.i(MyLog.TAG, "onCreate: "+Util.getRefreshTime(2));
+//        Log.i(MyLog.TAG, "onCreate: "+Util.getRefreshTime(3));
     }
 
     @Override
