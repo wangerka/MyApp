@@ -11,5 +11,5 @@ public interface ZhihuApi {
 
     //https://news-at.zhihu.com/api/4/news/before/20131119
     @GET("before/{time}")
-    Call<ZhiHuBeforeNews> getbeforeNews(@Path("time") String time);
+    Call<ZhiHuNews> getbeforeNews(@Path("time") String time);
 }

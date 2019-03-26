@@ -10,7 +10,7 @@ import java.util.List;
  * @author bejson.com (i@bejson.com)
  * @website http://www.bejson.com/java2pojo/
  */
-public class ZhiHuBeforeNews {
+public class ZhiHuBeforeNews{
 
     private String date;
     private List<Stories> stories;

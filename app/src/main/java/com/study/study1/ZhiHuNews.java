@@ -10,24 +10,24 @@ import java.util.List;
  * @author bejson.com (i@bejson.com)
  * @website http://www.bejson.com/java2pojo/
  */
-public class ZhiHuNews {
+public class ZhiHuNews extends ZhiHuBeforeNews{
 
-    private String date;
-    private List<Stories> stories;
+//    private String date;
+//    private List<Stories> stories;
     private List<Top_stories> top_stories;
-    public void setDate(String date) {
-        this.date = date;
-    }
-    public String getDate() {
-        return date;
-    }
+//    public void setDate(String date) {
+//        this.date = date;
+//    }
+//    public String getDate() {
+//        return date;
+//    }
 
-    public void setStories(List<Stories> stories) {
-        this.stories = stories;
-    }
-    public List<Stories> getStories() {
-        return stories;
-    }
+//    public void setStories(List<Stories> stories) {
+//        this.stories = stories;
+//    }
+//    public List<Stories> getStories() {
+//        return stories;
+//    }
 
     public void setTop_stories(List<Top_stories> top_stories) {
         this.top_stories = top_stories;

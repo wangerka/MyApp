@@ -14,25 +14,24 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.OkHttpClient;
-import okhttp3.logging.HttpLoggingInterceptor;
-import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
-public class ZhiHuFragment extends Fragment {
+public class ZhiHuFragment extends Fragment implements ZhihuRequest.RequestCallback {
 
     RecyclerView listview;
     SwipeRefreshLayout swip;
     ProgressBar bar;
-    int amount=1;
+    int amount = 1;
+    List<Stories> totalList = new ArrayList<>();
+    ZhiHuAdapter adapter;
+    boolean loadMore = false;
 
     @Nullable
     @Override
@@ -40,110 +39,97 @@ public class ZhiHuFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment2, null);
         listview = view.findViewById(R.id.listview);
         listview.setLayoutManager(new LinearLayoutManager(getActivity()));
+        listview.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
+                super.onScrollStateChanged(recyclerView, newState);
+                if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                    RecyclerView.LayoutManager layoutManager =
+                            listview.getLayoutManager();
+                    int count = listview.getAdapter().getItemCount();
+                    if (layoutManager instanceof LinearLayoutManager && count > 0) {
+                        LinearLayoutManager linearLayoutManager
+                                = (LinearLayoutManager) layoutManager;
+                        if (linearLayoutManager.findLastVisibleItemPosition() == count - 1) {
+                            loadMore = true;
+                            ZhihuRequest.getBeforeZhiHuNews(ZhiHuFragment.this,amount);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+            }
+        });
         swip = view.findViewById(R.id.swiprefresh);
         swip.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
                 swip.setRefreshing(true);
-                /*
-                 **打印retrofit信息部分
-                 */
-                HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(new HttpLoggingInterceptor.Logger() {
-                    @Override
-                    public void log(String message) {
-                        //打印retrofit日志
-                        Log.e("RetrofitLog","retrofitBack = "+message);
-                        Log.i(MyLog.TAG, "log: "+message);
-                    }
-                });
-                loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-                OkHttpClient client = new OkHttpClient.Builder()//okhttp设置部分，此处还可再设置网络参数
-                        .addInterceptor(loggingInterceptor)
-                        .build();
-                //*/
-
-                Retrofit retrofit = new Retrofit.Builder()
-                        .baseUrl(Util.ZHIHU_BASE_URL)
-                        .client(client)
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build();
-
-                ZhihuApi zhihu = retrofit.create(ZhihuApi.class);
-
-                Call<ZhiHuBeforeNews> zhihuRequest = zhihu.getbeforeNews(Util.getRefreshTime(amount++));
-                zhihuRequest.enqueue(new Callback<ZhiHuBeforeNews>() {
-                    @Override
-                    public void onResponse(Call<ZhiHuBeforeNews> call, Response<ZhiHuBeforeNews> response) {
-                        swip.setRefreshing(false);
-                        ZhiHuBeforeNews news = response.body();
-                        Log.i(MyLog.TAG, "onResponse: "+news);
-                        List<Stories> list = news.getStories();
-                        listview.setAdapter(new ZhiHuAdapter(list));
-                    }
-
-                    @Override
-                    public void onFailure(Call<ZhiHuBeforeNews> call, Throwable t) {
-
-                    }
-                });
+                ZhihuRequest.getBeforeZhiHuNews(ZhiHuFragment.this, amount++);
             }
         });
 
         bar = view.findViewById(R.id.progressbar);
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(Util.ZHIHU_BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        ZhihuApi zhihu = retrofit.create(ZhihuApi.class);
-
-        Call<ZhiHuNews> zhihuRequest = zhihu.getLatestNews();
-        zhihuRequest.enqueue(new Callback<ZhiHuNews>() {
-            @Override
-            public void onResponse(Call<ZhiHuNews> call, Response<ZhiHuNews> response) {
-                bar.setVisibility(View.GONE);
-                ZhiHuNews news = response.body();
-                List<Stories> list = news.getStories();
-                listview.setAdapter(new ZhiHuAdapter(list));
-            }
-
-            @Override
-            public void onFailure(Call<ZhiHuNews> call, Throwable t) {
-
-            }
-        });
+        ZhihuRequest.getZhiHuNews(ZhiHuFragment.this);
 
         return view;
     }
 
-    class ZhiHuAdapter extends RecyclerView.Adapter<StoryVH>{
+    class ZhiHuAdapter extends RecyclerView.Adapter<StoryVH> {
+        int ITEM_NORMAL = 0;
+        int ITEM_FOOT = 1;
         List<Stories> storiesList;
+
         public ZhiHuAdapter(List<Stories> stories) {
             storiesList = stories;
+        }
+
+        public void setData(List<Stories> stories) {
+            storiesList = stories;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+            if (position == getItemCount() - 1) {
+                return ITEM_FOOT;
+            } else {
+                return ITEM_NORMAL;
+            }
         }
 
         @NonNull
         @Override
         public StoryVH onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
-            View view = LayoutInflater.from(getContext()).inflate(R.layout.zhihu_story,viewGroup, false);
+            View view;
+            if (i == ITEM_NORMAL) {
+                view = LayoutInflater.from(getContext()).inflate(R.layout.zhihu_story, viewGroup, false);
+            } else {
+                view = LayoutInflater.from(getContext()).inflate(R.layout.zhihu_foot, viewGroup, false);
+            }
             return new StoryVH(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull StoryVH storyVH, int i) {
-            storyVH.fillData(storiesList.get(i));
+            if (getItemViewType(i) == ITEM_NORMAL) {
+                storyVH.fillData(storiesList.get(i));
+            }
         }
 
         @Override
         public int getItemCount() {
-            return storiesList.size();
+            return storiesList.size() + 1;
         }
     }
 
-    class StoryVH extends RecyclerView.ViewHolder{
+    class StoryVH extends RecyclerView.ViewHolder {
         TextView content;
         ImageView pic;
+
         public StoryVH(@NonNull View itemView) {
             super(itemView);
 
@@ -151,7 +137,7 @@ public class ZhiHuFragment extends Fragment {
             pic = itemView.findViewById(R.id.pic);
         }
 
-        public void fillData(Stories stories){
+        public void fillData(Stories stories) {
             content.setText(stories.getTitle());
             Glide.with(getActivity())
                     .load(stories.getImages().get(0))
@@ -169,5 +155,30 @@ public class ZhiHuFragment extends Fragment {
     public void onDestroy() {
         super.onDestroy();
         Log.i(MyLog.TAG, "onDestroy: ");
+    }
+
+    @Override
+    public void requestSuccess(Response response) {
+        if(swip.isRefreshing()) swip.setRefreshing(false);
+        ZhiHuNews news = (ZhiHuNews) response.body();
+        Log.i(MyLog.TAG, "onResponse: " + news);
+        List<Stories> list = news.getStories();
+        if(!loadMore){
+            totalList.clear();
+            totalList.addAll(list);
+            bar.setVisibility(View.GONE);
+            adapter = new ZhiHuAdapter(list);
+            listview.setAdapter(adapter);
+        }else {
+            loadMore = false;
+            totalList.addAll(list);
+            adapter.setData(totalList);
+            adapter.notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void requestFail(Throwable t) {
+        Toast.makeText(getActivity(),t.getMessage(),Toast.LENGTH_SHORT).show();
     }
 }
